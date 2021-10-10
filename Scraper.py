@@ -6,10 +6,11 @@ import requests
 import bs4
 import re
 from bs4 import BeautifulSoup
+from nltk import sent_tokenize
 
 
 def main():
-    URL = 'https://pubmed.ncbi.nlm.nih.gov/26057783/'
+    URL = 'https://pubmed.ncbi.nlm.nih.gov/12216989/'
     # returns a list of URLs that are relevant to the chosen URL
 
     urls = []
@@ -23,22 +24,18 @@ def main():
         dict_url[count] = u
         count += 1
 
-
     # calls function to scrape text off of URLs
     # puts contents in a separate text file page
     web_scraper(dict_url)
 
 
-# save files
-def store_file(text, name):
-    with open(str(name) + '.txt', 'w', encoding="utf-8") as f:
-        f.write(str(text))
-
-
 # clean text
 def clean_text(text):
-    text = ' '.join(w for w in text.split() if w.isalnum() and w != '\n' and w != '\t')
-    return text
+    lines = text.split(". ")
+    listOfClean = []
+    for line in lines:
+        listOfClean += (sent_tokenize(line))
+    return listOfClean
 
 
 # get list of URLs
@@ -57,7 +54,7 @@ def web_crawler(url):
             else:
                 urls.append(a.get('href'))
     except:
-        print("Exception occured for URL", a)
+        print("Exception occurred for URL", a)
 
     # get additional links from within the webpage
     outside = soup.findAll('ul', 'linkout-category-links')
@@ -66,7 +63,7 @@ def web_crawler(url):
             for a in obj.find_all('a'):
                 urls.append(a.get('href'))
     except:
-        print("Exception occured for URL")
+        print("Exception occurred for URL")
 
     return urls
 
@@ -76,18 +73,21 @@ def web_scraper(dict):
         try:
             page = requests.get(val)
         except:
-            print("Error for " + val)
             continue
         soup = BeautifulSoup(page.content, 'html.parser')
-        results = soup.findAll('div', 'abstract')
-        if len(results) == 0:
-            results = soup.findAll('p')
-        text = post.get_text()
-        print(len(text.strip()), ":", val)
+
+        results = soup.findAll('div', 'abstract-content selected')
         for post in results:
-            if len(text.strip()) > 15:
-                store_file(post.get_text(), str(key))
-                store_file(clean_text(post.get_text()), str(key) + "_clean")
+            try:
+                with open(str(key) + '.txt', 'w') as f:
+                    f.write(str(post.get_text().encode('utf-8', 'ignore').decode("utf-8")))
+                with open(str(key) + '_clean' + '.txt', 'w') as f:
+                    lines = clean_text(post.get_text().encode('utf-8', 'ignore').decode("utf-8"))
+                    for line in lines:
+                        f.write(line)
+                        f.write('\n')
+            except:
+                continue
 
 
 if __name__ == '__main__':
