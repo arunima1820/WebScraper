@@ -76,12 +76,13 @@ def web_scraper(dict):
     for key, val in dict.items():
         page = requests.get(val)
         soup = BeautifulSoup(page.content, 'html.parser')
-
         results = soup.findAll('div', 'abstract-content selected')
-
-        for post in results:
-            store_file(post.get_text(), str(key))
-            store_file(clean_text(post.get_text()), str(key) + "_clean")
+        if len(results) == 0:
+            results = soup.findAll('div')
+        print(len(results))
+        # for post in results:
+        #     store_file(post.get_text(), str(key))
+        #     store_file(clean_text(post.get_text()), str(key) + "_clean")
 
 
 if __name__ == '__main__':
