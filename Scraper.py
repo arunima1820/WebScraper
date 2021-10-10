@@ -9,7 +9,7 @@ from bs4 import BeautifulSoup
 
 
 def main():
-    URL = 'https://pubmed.ncbi.nlm.nih.gov/12178933/'
+    URL = 'https://pubmed.ncbi.nlm.nih.gov/26057783/'
     # returns a list of URLs that are relevant to the chosen URL
 
     urls = []
@@ -31,14 +31,13 @@ def main():
 
 # save files
 def store_file(text, name):
-    with open(str(name) + '.txt', 'w') as f:
-        f.write(text)
+    with open(str(name) + '.txt', 'w', encoding="utf-8") as f:
+        f.write(str(text))
 
 
 # clean text
 def clean_text(text):
-    text = re.sub('\n', '', text.strip())
-    text = re.sub('\t', '', text)
+    text = ' '.join(w for w in text.split() if w.isalnum() and w != '\n' and w != '\t')
     return text
 
 
@@ -74,14 +73,21 @@ def web_crawler(url):
 
 def web_scraper(dict):
     for key, val in dict.items():
-        page = requests.get(val)
-        # soup = BeautifulSoup(page.content, 'html.parser')
-        soup = BeautifulSoup(page.text, 'html.parser')
-        texet = soup.find('html').text
-        print(val, ":", clean_text(texet))
-        # for post in results:
-        #     store_file(post.get_text(), str(key))
-        #     store_file(clean_text(post.get_text()), str(key) + "_clean")
+        try:
+            page = requests.get(val)
+        except:
+            print("Error for " + val)
+            continue
+        soup = BeautifulSoup(page.content, 'html.parser')
+        results = soup.findAll('div', 'abstract')
+        if len(results) == 0:
+            results = soup.findAll('p')
+        text = post.get_text()
+        print(len(text.strip()), ":", val)
+        for post in results:
+            if len(text.strip()) > 15:
+                store_file(post.get_text(), str(key))
+                store_file(clean_text(post.get_text()), str(key) + "_clean")
 
 
 if __name__ == '__main__':
